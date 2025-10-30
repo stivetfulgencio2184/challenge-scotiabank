@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: student-microservice
+
+api:
+  version: /api/v1
+
+resource: /students
+
+server:
+  port: 80
