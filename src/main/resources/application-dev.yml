@@ -1,0 +1,21 @@
+spring:
+  # Configuration of R2DBC with H2
+  r2dbc:
+    url: r2dbc:h2:mem:///studentDB;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+
+  # Automatic load of scripts SQL
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
+  main:
+    web-application-type: reactive
+
+logging:
+  level:
+    io.r2dbc.h2: DEBUG  # logs of driver R2DBC of H2 (queries, connections, etc.)
+    org.springframework.data.r2dbc.core: DEBUG  # logs of the Spring Data R2DBC layer (generated queries by: DatabaseClient, R2dbcEntityTemplate, etc.)
+    org.springframework.r2dbc.connection: DEBUG # logs of connection management and reactive transactions.
