@@ -1,47 +1,57 @@
 package org.alpha.omega.student_microservice.application.service;
 
 import org.alpha.omega.student_microservice.application.port.out.StudentRepositoryPort;
+import org.alpha.omega.student_microservice.application.util.ApplicationMessages;
 import org.alpha.omega.student_microservice.application.util.ApplicationTestMessages;
 import org.alpha.omega.student_microservice.domain.exception.AlreadyRegisteredException;
 import org.alpha.omega.student_microservice.domain.model.Student;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.alpha.omega.student_microservice.application.util.ServiceHelper.enableTransactionalExecution;
+import static org.alpha.omega.student_microservice.application.util.ServiceHelper.studentFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(value = MockitoExtension.class)
 class StudentServiceTest {
 
+    @Mock
     private StudentRepositoryPort repositoryPort;
-    private StudentService studentService;
 
-    @BeforeEach
-    void setUp() {
-        this.repositoryPort = mock(StudentRepositoryPort.class);
-        this.studentService = new StudentService(repositoryPort);
-    }
+    @Mock
+    private TransactionalOperator transactionalOperator;
+
+    @InjectMocks
+    private StudentService studentService;
 
     @Test
     void testStudentRegistered() {
         //Given
-        Student studentRegistered = Student.builder()
-                .id(123)
-                .name("Jesús")
-                .lastName("Salvador")
-                .status(Boolean.TRUE)
-                .age(33)
-                .build();
-        given(this.repositoryPort.findByStudentId(123))
+        Student studentRegistered = studentFactory(1, true, 12);
+        Integer studentId = studentRegistered.getId();
+        given(this.repositoryPort.findByStudentId(studentId))
                 .willReturn(Mono.just(studentRegistered));
 
         //When and Then
-        StepVerifier.create(this.studentService.isStudentRegistered(123))
-                .expectNext(Boolean.TRUE)
+        StepVerifier.create(this.studentService.isStudentRegistered(studentId))
+                .expectNext(true)
                 .verifyComplete();
-        verify(this.repositoryPort, times(1)).findByStudentId(123);
+        then(this.repositoryPort).should(times(1)).findByStudentId(studentId);
     }
 
     @Test
@@ -52,111 +62,140 @@ class StudentServiceTest {
 
         //When and Then
         StepVerifier.create(this.studentService.isStudentRegistered(777))
-                .expectNext(Boolean.FALSE)
+                .expectNext(false)
                 .verifyComplete();
-        verify(this.repositoryPort, times(1)).findByStudentId(777);
+        then(this.repositoryPort).should(times(1)).findByStudentId(777);
     }
 
     @Test
     void testStudentAlreadyRegistered() {
         //Given
-        Student studentRegistered = Student.builder()
-                .id(123)
-                .name("Jesús")
-                .lastName("Salvador")
-                .status(Boolean.TRUE)
-                .age(33)
-                .build();
-        given(this.repositoryPort.findByStudentId(123))
+        Student studentRegistered = studentFactory(1, true, 23);
+        Integer studentId = studentRegistered.getId();
+        given(this.repositoryPort.findByStudentId(studentId))
                 .willReturn(Mono.just(studentRegistered));
+        enableTransactionalExecution(this.transactionalOperator);
 
         //When and Then
         StepVerifier.create(this.studentService.createStudent(studentRegistered))
-                .expectErrorSatisfies(error -> {
-                    assert error instanceof AlreadyRegisteredException;
-                    assert error.getMessage().equals(String.format(
-                            ApplicationTestMessages.STUDENT_ALREADY_REGISTERED, studentRegistered.getId()));
-                }).verify();
-        verify(this.repositoryPort, times(1)).findByStudentId(123);
+                .expectErrorSatisfies(error ->
+                    assertThat(error)
+                            .isInstanceOf(AlreadyRegisteredException.class)
+                            .hasMessage(String.format(
+                                    ApplicationTestMessages.Exceptions.ALREADY_REGISTERED, ApplicationMessages.STUDENT,
+                                    ApplicationTestMessages.ID, studentRegistered.getId()))
+                ).verify();
+        then(this.repositoryPort).should(times(1)).findByStudentId(studentId);
+        then(this.repositoryPort).should(never()).save(any());
     }
 
     @Test
     void testCreateStudent() {
         //Given
-        Student studentToRegister = Student.builder()
-                .id(777)
-                .name("Pedro")
-                .lastName("Winston")
-                .status(Boolean.TRUE)
-                .age(33)
-                .build();
-        given(this.repositoryPort.findByStudentId(777))
+        Student studentToRegister = studentFactory(1, true, 24);
+        Integer studentId = studentToRegister.getId();
+        given(this.repositoryPort.findByStudentId(studentId))
                 .willReturn(Mono.empty());
         given(this.repositoryPort.save(studentToRegister)).willReturn(Mono.just(studentToRegister));
+        enableTransactionalExecution(this.transactionalOperator);
 
         //When and Then
         StepVerifier.create(this.studentService.createStudent(studentToRegister))
-                .expectNextMatches(student -> student.getId().equals(studentToRegister.getId()) &&
-                        student.getName().equals(studentToRegister.getName()) &&
-                        student.getLastName().equals(studentToRegister.getLastName()) &&
-                        student.getStatus().equals(studentToRegister.getStatus()) &&
-                        student.getAge().equals(studentToRegister.getAge()))
+                .assertNext(student -> assertEquals(studentToRegister, student))
                 .verifyComplete();
-        verify(this.repositoryPort, times(1)).findByStudentId(777);
-        verify(this.repositoryPort, times(1)).save(studentToRegister);
+        then(this.repositoryPort).should(times(1)).findByStudentId(studentId);
+        then(this.repositoryPort).should(times(1)).save(studentToRegister);
     }
 
     @Test
     void testGetAllStudents() {
         //Given
-        Student sfulgencio = Student.builder()
-                .id(345)
-                .name("Stivet")
-                .lastName("Fulgencio")
-                .status(Boolean.TRUE)
-                .age(41)
-                .build();
-        Student mruiz = Student.builder()
-                .id(678)
-                .name("Mary")
-                .lastName("Ruiz")
-                .status(Boolean.FALSE)
-                .age(30)
-                .build();
+        Student sfulgencio = studentFactory(1, true, 41);
+        Student mruiz = studentFactory(2, false, 30);
+        List<Student> expectedStudents = List.of(sfulgencio, mruiz);
         given(this.repositoryPort.findAll()).willReturn(Flux.just(sfulgencio, mruiz));
 
         //When and Then
-        StepVerifier.create(this.studentService.getAllStudents())
-                .expectNext(sfulgencio)
-                .expectNext(mruiz)
+        StepVerifier.create(this.studentService.getAllStudents()
+                        .collectList())
+                .assertNext(students -> {
+                    assertEquals(expectedStudents.size(), students.size());
+                    Set<String> names = students.stream()
+                            .map(Student::getName)
+                            .collect(Collectors.toSet());
+                    assertTrue(names.contains(sfulgencio.getName()));
+                    assertTrue(names.contains(mruiz.getName()));
+                })
                 .verifyComplete();
-        verify(this.repositoryPort, times(1)).findAll();
+        then(this.repositoryPort).should(times(1)).findAll();
     }
 
     @Test
-    void testGetStudentByStatus() {
+    void testGetStudentWithActiveStatus() {
         //Given
-        Student sfulgencio = Student.builder()
-                .id(345)
-                .name("Stivet")
-                .lastName("Fulgencio")
-                .status(Boolean.TRUE)
-                .age(41)
-                .build();
-        Student mruiz = Student.builder()
-                .id(678)
-                .name("Mary")
-                .lastName("Ruiz")
-                .status(Boolean.TRUE)
-                .age(30)
-                .build();
-        given(this.repositoryPort.findByStatus(Boolean.TRUE)).willReturn(Flux.just(sfulgencio, mruiz));
+        Student sfulgencio = studentFactory(1, true, 35);
+        Student mruiz = studentFactory(2, true, 24);
+        List<Student> expectedStudents = List.of(sfulgencio, mruiz);
+        given(this.repositoryPort.findByStatus(true)).willReturn(Flux.just(sfulgencio, mruiz));
 
         //When and Then
-        StepVerifier.create(this.studentService.getStudentsByStatus(Boolean.TRUE))
-                .expectNext(sfulgencio)
-                .expectNext(mruiz)
+        StepVerifier.create(this.studentService.getStudentsByStatus(true)
+                        .collectList())
+                .assertNext(students -> {
+                    assertEquals(expectedStudents.size(), students.size());
+                    Set<String> names = students.stream()
+                            .map(Student::getName)
+                            .collect(Collectors.toSet());
+                    assertTrue(names.contains(sfulgencio.getName()));
+                    assertTrue(names.contains(mruiz.getName()));
+                })
                 .verifyComplete();
-        verify(this.repositoryPort, times(1)).findByStatus(Boolean.TRUE);
+        then(this.repositoryPort).should(times(1)).findByStatus(true);
+    }
+
+    @Test
+    void testGetStudentWithActiveStatusEmpty() {
+        //Given
+        given(this.repositoryPort.findByStatus(true)).willReturn(Flux.empty());
+
+        //When and Then
+        StepVerifier.create(this.studentService.getStudentsByStatus(true))
+                .expectNextCount(0)
+                .verifyComplete();
+        then(this.repositoryPort).should(times(1)).findByStatus(true);
+    }
+
+    @Test
+    void testGetStudentWithInactiveStatus() {
+        //Given
+        Student sfulgencio = studentFactory(1, false, 27);
+        Student mruiz = studentFactory(2, false, 16);
+        List<Student> expectedStudents = List.of(sfulgencio, mruiz);
+        given(this.repositoryPort.findByStatus(false)).willReturn(Flux.just(sfulgencio, mruiz));
+
+        //When and Then
+        StepVerifier.create(this.studentService.getStudentsByStatus(false)
+                        .collectList())
+                .assertNext(students -> {
+                    assertEquals(expectedStudents.size(), students.size());
+                    Set<String> names = students.stream()
+                            .map(Student::getName)
+                            .collect(Collectors.toSet());
+                    assertTrue(names.contains(sfulgencio.getName()));
+                    assertTrue(names.contains(mruiz.getName()));
+                })
+                .verifyComplete();
+        then(this.repositoryPort).should(times(1)).findByStatus(false);
+    }
+
+    @Test
+    void testGetStudentWithInactiveStatusEmpty() {
+        //Given
+        given(this.repositoryPort.findByStatus(false)).willReturn(Flux.empty());
+
+        //When and Then
+        StepVerifier.create(this.studentService.getStudentsByStatus(false))
+                .verifyComplete();
+        then(this.repositoryPort).should(times(1)).findByStatus(false);
     }
 }

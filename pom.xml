@@ -30,6 +30,8 @@
 		<java.version>17</java.version>
 		<org.mapstruct.version>1.6.3</org.mapstruct.version>
 		<org.maven.version>3.11.0</org.maven.version>
+		<org.lombok.version>1.18.36</org.lombok.version>
+		<org.lombok.mapstruct>0.2.0</org.lombok.mapstruct>
 	</properties>
 	<dependencies>
 		<!-- WebFlux -->
@@ -55,6 +57,14 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>${org.lombok.version}</version>
+			<optional>true</optional>
 		</dependency>
 
 		<!-- Mapstruct -->
@@ -103,10 +113,32 @@
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 					<annotationProcessorPaths>
+						<!-- The main mistake is to forget that our runtime will search
+						either the annotation processor path or the classpath for annotation
+						processors, but it won’t search both -->
+						<!-- We should note that for Lombok version 1.18.16 and above, we
+						need to add both the Lombok lombok-mapstruct-binding and the mapstruct-processor
+						dependencies to the annotationProcessorPaths element. When we don’t do this,
+						we could get a compilation error: “Unknown Property in Result Type…”. -->
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
 							<version>${org.mapstruct.version}</version>
+						</path>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${org.lombok.version}</version>
+						</path>
+						<!-- We need the lombok-mapstruct-binding dependency in order to
+						make Lombok and MapStruct work together. -->
+						<!-- Essentially, it tells MapStruct to wait until Lombok has done
+						all its annotation processing before generating mapper classes for
+						Lombok-enhanced beans -->
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok-mapstruct-binding</artifactId>
+							<version>${org.lombok.mapstruct}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>

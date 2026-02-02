@@ -1,6 +1,8 @@
 package org.alpha.omega.student_microservice.infrastructure.adapter.in.web.strategy;
 
+import org.alpha.omega.student_microservice.domain.exception.DefaultException;
 import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.constant.WebMessages;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -10,22 +12,23 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
-public class DefaultExceptionStrategy implements HttpErrorResponseStrategy{
+public class DefaultExceptionStrategy implements ExceptionStrategy<DefaultException> {
 
     @Override
-    public Boolean support(Throwable ex) {
-        return true;
+    public Class<DefaultException> exceptionType() {
+        return DefaultException.class;
     }
 
     @Override
-    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+    public Mono<Void> handle(@NonNull ServerWebExchange exchange, @NonNull DefaultException ex) {
         var response = exchange.getResponse();
+        if (response.isCommitted())
+            return Mono.error(ex);
         response.setStatusCode(INTERNAL_SERVER_ERROR);
         response.getHeaders().setContentType(APPLICATION_JSON);
 
-        var body = String.format(WebMessages.Exceptions.INTERNAL_SERVER_ERROR_BODY, ex.getMessage());
+        var body = WebMessages.Exceptions.INTERNAL_SERVER_ERROR_BODY.formatted(ex.getMessage());
 
-        var buffer = response.bufferFactory().wrap(body.getBytes(UTF_8));
-        return response.writeWith(Mono.just(buffer));
+        return response.writeWith(Mono.fromSupplier(() -> response.bufferFactory().wrap(body.getBytes(UTF_8))));
     }
 }

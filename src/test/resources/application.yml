@@ -1,15 +1,18 @@
 spring:
   r2dbc:
-    url: r2dbc:h2:mem:///studentDB;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    # -${random.uuid} : configuring this parameter, we're using a DB distinct by context (by each test class)
+    url: r2dbc:h2:mem:///studentDB-${random.uuid}
     username: sa
     password:
   sql:
     init:
       mode: always
       schema-locations: classpath:db/schema.sql
-      #data-locations: classpath:data.sql
 
 api:
   version: /api/v1
 
-resource: /students
+resource:
+  students: /students
+  users: /users
+  roles: /roles

@@ -1,7 +1,7 @@
 package org.alpha.omega.student_microservice.infrastructure.adapter.in.web.v1.router;
 
+import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.uri.StudentUriFactory;
 import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.v1.handler.StudentHandlerV1;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -14,23 +14,21 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @Configuration
 public class StudentRouterV1 {
 
-    @Value(value = "${api.version}")
-    private String apiVersion;
+    private final StudentUriFactory studentUriFactory;
 
-    @Value(value = "${resource}")
-    private String resource;
+    public StudentRouterV1(StudentUriFactory studentUriFactory) {
+        this.studentUriFactory = studentUriFactory;
+    }
 
     @Bean
     public RouterFunction<ServerResponse> studentRoutesV1(StudentHandlerV1 handler) {
-        return route(GET(this.apiVersion + this.resource)
-                        .and(accept(APPLICATION_JSON)),
-                    request -> handler.getStudents())
-                .andRoute(GET(this.apiVersion + this.resource + "/{status}")
-                                .and(accept(APPLICATION_JSON)),
-                        handler::findStudentsByStatus)
-                .andRoute(POST(this.apiVersion + this.resource)
-                                .and(accept(APPLICATION_JSON))
+        return route(GET(getBaseUri()), handler::getStudents)
+                .andRoute(POST(getBaseUri())
                                 .and(contentType(APPLICATION_JSON)),
                         handler::createNewStudent);
+    }
+
+    private String getBaseUri() {
+        return this.studentUriFactory.getApiVersion() + this.studentUriFactory.getResourceStudents();
     }
 }

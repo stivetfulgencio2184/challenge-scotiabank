@@ -10,7 +10,13 @@ import org.springframework.context.annotation.Import;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.util.PersistenceHelper.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * DataR2dbcTest: Configure the persistence part with R2DBC and H2 in memory.
@@ -30,77 +36,102 @@ class StudentRepositoryAdapterTest {
 
     @BeforeEach
     void setUp() {
-        this.repository.deleteAll().block();
+        StepVerifier.create(
+                this.repository.deleteAll()
+        ).verifyComplete();
     }
 
     @Test
     void testSaveStudent() {
         //Given
-        Student studentToRecord = Student.builder()
-                .id(777)
-                .name("Jesús")
-                .lastName("Salvador")
-                .status(Boolean.TRUE)
-                .age(33)
-                .build();
+        Student studentToRecord = studentFactory(777, "Jesús", "Salvador", true, 33);
 
         //When and Then
         StepVerifier.create(this.adapter.save(studentToRecord))
-                .expectNextMatches(student -> student.getId().equals(studentToRecord.getId()) &&
-                        student.getName().equals(studentToRecord.getName()) &&
-                        student.getLastName().equals(studentToRecord.getLastName()) &&
-                        student.getStatus().equals(studentToRecord.getStatus()) &&
-                        student.getAge().equals(studentToRecord.getAge()))
+                .assertNext(student -> assertStudent(studentToRecord, student))
                 .verifyComplete();
     }
 
     @Test
     void testFindByStudentId() {
         //Given
-        StudentEntity studentToRecord = new StudentEntity(null, 777, "Jesús", "Salvador", Boolean.TRUE, 33);
-        StudentEntity studentSaved = this.repository.save(studentToRecord).block();
+        StudentEntity ssfulgencio = studentEntityFactory(717, "Sadrac", "Fulgencio", true, 5);
 
         //When and Then
-        StepVerifier.create(this.adapter.findByStudentId(studentToRecord.id()))
-                .expectNextMatches(student -> {
-                    assertNotNull(studentSaved);
-                    return student.getId().equals(studentSaved.id()) &&
-                            student.getName().equals(studentSaved.name()) &&
-                            student.getLastName().equals(studentSaved.lastName()) &&
-                            student.getStatus().equals(studentSaved.status()) &&
-                            student.getAge().equals(studentSaved.age());
-                })
+        StepVerifier.create(this.repository.save(ssfulgencio)
+                        .map(StudentEntity::id)
+                        .flatMap(this.adapter::findByStudentId))
+                .assertNext(student -> assertStudentEntity(ssfulgencio, student))
+                .verifyComplete();
+    }
+
+    @Test
+    void testFindByStudentEmpty() {
+        //Given
+        Integer nonExistentId = 100;
+
+        //When and Then
+        StepVerifier.create(this.adapter.findByStudentId(nonExistentId))
+                .expectNextCount(0)
                 .verifyComplete();
     }
 
     @Test
     void testFindAllStudents() {
         //Given
-        StudentEntity jsalvador = new StudentEntity(null, 777, "Jesús", "Salvador", Boolean.TRUE, 33);
-        StudentEntity sfulgencio = new StudentEntity(null, 246, "Stivet", "Fulgencio", Boolean.FALSE, 41);
-        StudentEntity mruiz = new StudentEntity(null, 864, "Mary", "Ruiz", Boolean.TRUE, 30);
-        this.repository.saveAll(Flux.just(jsalvador, sfulgencio, mruiz)).collectList().block();
+        StudentEntity jsalvador = studentEntityFactory(777, "Jesús", "Salvador", true, 33);
+        StudentEntity sfulgencio = studentEntityFactory(246, "Stivet", "Fulgencio", false, 41);
+        StudentEntity mruiz = studentEntityFactory(864, "Mary", "Ruiz", true, 30);
+        List<StudentEntity> expectedStudents = List.of(jsalvador, sfulgencio, mruiz);
 
         //When and Then
-        StepVerifier.create(this.adapter.findAll())
-                .expectNextMatches(student -> student.getId().equals(jsalvador.id()) && student.getName().equals(jsalvador.name()))
-                .expectNextMatches(student -> student.getId().equals(sfulgencio.id()) && student.getName().equals(sfulgencio.name()))
-                .expectNextMatches(student -> student.getId().equals(mruiz.id()) && student.getName().equals(mruiz.name()))
-                .verifyComplete();
+        StepVerifier.create(this.repository.saveAll(Flux.just(jsalvador, sfulgencio, mruiz))
+                        .thenMany(this.adapter.findAll())
+                        .collectList())
+                .assertNext(students -> {
+                    assertEquals(expectedStudents.size(), students.size());
+                    Set<String> names = students.stream()
+                            .map(Student::getName)
+                            .collect(Collectors.toSet());
+                    assertTrue(names.contains(jsalvador.name()));
+                    assertTrue(names.contains(sfulgencio.name()));
+                    assertTrue(names.contains(mruiz.name()));
+                }).verifyComplete();
     }
 
     @Test
     void testFindActiveStudents() {
         //Given
-        StudentEntity jsalvador = new StudentEntity(null, 777, "Jesús", "Salvador", Boolean.TRUE, 33);
-        StudentEntity sfulgencio = new StudentEntity(null, 246, "Stivet", "Fulgencio", Boolean.FALSE, 41);
-        StudentEntity mruiz = new StudentEntity(null, 864, "Mary", "Ruiz", Boolean.TRUE, 30);
-        this.repository.saveAll(Flux.just(jsalvador, sfulgencio, mruiz)).collectList().block();
+        StudentEntity jsalvador = studentEntityFactory(777, "Jesús", "Salvador", true, 33);
+        StudentEntity sfulgencio = studentEntityFactory(246, "Stivet", "Fulgencio", false, 41);
+        StudentEntity mruiz = studentEntityFactory(864, "Mary", "Ruiz", true, 30);
+        List<StudentEntity> expectedStudents = List.of(jsalvador, mruiz);
 
         //When and Then
-        StepVerifier.create(this.adapter.findByStatus(Boolean.TRUE))
-                .expectNextMatches(activeStudent -> activeStudent.getId().equals(jsalvador.id()) && activeStudent.getName().equals(jsalvador.name()))
-                .expectNextMatches(activeStudent -> activeStudent.getId().equals(mruiz.id()) && activeStudent.getName().equals(mruiz.name()))
+        StepVerifier.create(this.repository.saveAll(Flux.just(jsalvador, sfulgencio, mruiz))
+                        .thenMany(this.adapter.findByStatus(true))
+                        .collectList())
+                .assertNext(students -> {
+                    assertEquals(expectedStudents.size(), students.size());
+                    Set<String> names = students.stream()
+                            .map(Student::getName)
+                            .collect(Collectors.toSet());
+                    assertTrue(names.contains(jsalvador.name()));
+                    assertTrue(names.contains(mruiz.name()));
+                }).verifyComplete();
+    }
+
+    @Test
+    void testFindActiveStudentsEmpty() {
+        //Given
+        StudentEntity jsalvador = studentEntityFactory(777, "Jesús", "Salvador", true, 33);
+        StudentEntity sfulgencio = studentEntityFactory(246, "Stivet", "Fulgencio", true, 41);
+        StudentEntity mruiz = studentEntityFactory(864, "Mary", "Ruiz", true, 30);
+
+        //When and Then
+        StepVerifier.create(this.repository.saveAll(Flux.just(jsalvador, sfulgencio, mruiz))
+                        .thenMany(this.adapter.findByStatus(false)))
+                .expectNextCount(0)
                 .verifyComplete();
     }
 }
