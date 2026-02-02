@@ -1,33 +1,43 @@
 package org.alpha.omega.student_microservice.infrastructure.adapter.in.web.exception;
 
-import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.strategy.HttpErrorResponseStrategy;
+import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.strategy.ExceptionStrategy;
+import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.strategy.ExceptionStrategyResolver;
 import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebExceptionHandler;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @Component
 @Order(value = -2)
 public class GlobalExceptionHandler implements WebExceptionHandler {
 
-    private final List<HttpErrorResponseStrategy> strategies;
+    private final ExceptionStrategyResolver resolver;
 
-    public GlobalExceptionHandler(List<HttpErrorResponseStrategy> strategies) {
-        this.strategies = strategies;
+    public GlobalExceptionHandler(ExceptionStrategyResolver resolver) {
+        this.resolver = resolver;
     }
 
     @Override
-    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
-        return this.strategies.stream()
-                .filter(strategy -> strategy.support(ex))
-                .findFirst()
-                .orElseGet(() -> strategies.stream()
-                        .filter(s -> s.support(new Exception()))
-                        .findFirst()
-                        .orElseThrow())
-                .handle(exchange, ex);
+    @NonNull
+    public Mono<Void> handle(@NonNull ServerWebExchange exchange, @NonNull Throwable ex) {
+        return this.resolver.resolve(ex)
+                .switchIfEmpty(Mono.error(ex)) // if there is no strategy → propagate
+                .flatMap(strategy -> invoke(strategy, exchange, ex))
+                .onErrorResume(handlerError -> {
+                    exchange.getResponse()
+                            .setStatusCode(INTERNAL_SERVER_ERROR);
+                    return exchange.getResponse().setComplete();
+                });
+    }
+
+    @SuppressWarnings(value = "unchecked")
+    private <T extends Throwable> Mono<Void> invoke(ExceptionStrategy<T> strategy,
+                                                    ServerWebExchange exchange, Throwable ex){
+        return strategy.handle(exchange, (T) ex);
     }
 }

@@ -7,7 +7,10 @@ spring:
 api:
   version: /api/v1
 
-resource: /students
+resource:
+  students: /students
+  users: /users
+  roles: /roles
 
 server:
   port: 80
