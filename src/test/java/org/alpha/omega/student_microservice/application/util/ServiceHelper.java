@@ -1,6 +1,6 @@
 package org.alpha.omega.student_microservice.application.util;
 
-//import org.alpha.omega.student_microservice.domain.model.Role;
+import org.alpha.omega.student_microservice.domain.model.Role;
 import org.alpha.omega.student_microservice.domain.model.Student;
 //import org.alpha.omega.student_microservice.domain.model.User;
 import org.mockito.Mockito;
@@ -19,13 +19,13 @@ import static org.mockito.Mockito.mock;
 
 public class ServiceHelper {
 
-//    public static Role roleFactory(Integer id, String name, String abbreviation) {
-//        return Role.builder()
-//                .id(id)
-//                .name(name)
-//                .abbreviation(abbreviation)
-//                .build();
-//    }
+    public static Role roleFactory(Integer id, String name, String abbreviation) {
+        return Role.builder()
+                .id(id)
+                .name(name)
+                .abbreviation(abbreviation)
+                .build();
+    }
 
     public static Student studentFactory(Integer studentId, Boolean status, Integer age) {
         return Student.builder()
@@ -46,13 +46,13 @@ public class ServiceHelper {
 //                .roles(roles)
 //                .build();
 //    }
-//
-//    public static void assertRole(Role expected, Role actual) {
-//        assertThat(actual.getId()).isPositive();
-//        assertEquals(expected.getName(), actual.getName());
-//        assertEquals(expected.getAbbreviation(), actual.getAbbreviation());
-//    }
-//
+
+    public static void assertRole(Role expected, Role actual) {
+        assertThat(actual.getId()).isPositive();
+        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getAbbreviation(), actual.getAbbreviation());
+    }
+
 //    public static void assertUser(User expected, User actual) {
 //        assertThat(actual.getId()).isPositive();
 //        assertEquals(expected.getUsername(), actual.getUsername());
