@@ -2,7 +2,7 @@ package org.alpha.omega.student_microservice.application.util;
 
 import org.alpha.omega.student_microservice.domain.model.Role;
 import org.alpha.omega.student_microservice.domain.model.Student;
-//import org.alpha.omega.student_microservice.domain.model.User;
+import org.alpha.omega.student_microservice.domain.model.User;
 import org.mockito.Mockito;
 import org.springframework.transaction.ReactiveTransaction;
 import org.springframework.transaction.reactive.TransactionCallback;
@@ -37,15 +37,15 @@ public class ServiceHelper {
                 .build();
     }
 
-//    public static User userFactory(Integer id, String username, Boolean enabled, Set<Role> roles) {
-//        return User.builder()
-//                .id(id)
-//                .username(username)
-//                .enabled(enabled)
-//                .password("password" + username)
-//                .roles(roles)
-//                .build();
-//    }
+    public static User userFactory(Integer id, String username, Boolean enabled, Set<Role> roles) {
+        return User.builder()
+                .id(id)
+                .username(username)
+                .enabled(enabled)
+                .password("password" + username)
+                .roles(roles)
+                .build();
+    }
 
     public static void assertRole(Role expected, Role actual) {
         assertThat(actual.getId()).isPositive();
@@ -53,13 +53,13 @@ public class ServiceHelper {
         assertEquals(expected.getAbbreviation(), actual.getAbbreviation());
     }
 
-//    public static void assertUser(User expected, User actual) {
-//        assertThat(actual.getId()).isPositive();
-//        assertEquals(expected.getUsername(), actual.getUsername());
-//        assertEquals(expected.getPassword(), actual.getPassword());
-//        assertEquals(expected.getEnabled(), actual.getEnabled());
-//        assertNull(actual.getRoles());
-//    }
+    public static void assertUser(User expected, User actual) {
+        assertThat(actual.getId()).isPositive();
+        assertEquals(expected.getUsername(), actual.getUsername());
+        assertEquals(expected.getPassword(), actual.getPassword());
+        assertEquals(expected.getEnabled(), actual.getEnabled());
+        assertNull(actual.getRoles());
+    }
 
     public static void enableTransactionalExecution(TransactionalOperator transactionalOperator) {
         ReactiveTransaction transaction = mock(ReactiveTransaction.class);
