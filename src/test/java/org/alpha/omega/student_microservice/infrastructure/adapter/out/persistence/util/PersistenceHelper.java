@@ -2,10 +2,10 @@ package org.alpha.omega.student_microservice.infrastructure.adapter.out.persiste
 
 import org.alpha.omega.student_microservice.domain.model.Role;
 import org.alpha.omega.student_microservice.domain.model.Student;
-//import org.alpha.omega.student_microservice.domain.model.User;
+import org.alpha.omega.student_microservice.domain.model.User;
 import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.RoleEntity;
 import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.StudentEntity;
-//import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.UserEntity;
+import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.UserEntity;
 
 import java.util.Set;
 
@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PersistenceHelper {
 
-//    public static UserEntity userEntityFactory(Boolean enabled, String username, String password) {
-//        return new UserEntity(null, enabled, username, password);
-//    }
+    public static UserEntity userEntityFactory(Boolean enabled, String username, String password) {
+        return new UserEntity(null, enabled, username, password);
+    }
 
     public static RoleEntity roleEntityFactory(String name, String abbreviation) {
         return new RoleEntity(null, name, abbreviation);
@@ -28,14 +28,14 @@ public class PersistenceHelper {
         return new StudentEntity(null, id, name, lastname, status, age);
     }
 
-//    public static User userFactory(String username, String password, Boolean enabled, Set<Role> roles) {
-//        return User.builder()
-//                .username(username)
-//                .password(password)
-//                .enabled(enabled)
-//                .roles(roles)
-//                .build();
-//    }
+    public static User userFactory(String username, String password, Boolean enabled, Set<Role> roles) {
+        return User.builder()
+                .username(username)
+                .password(password)
+                .enabled(enabled)
+                .roles(roles)
+                .build();
+    }
 
     public static Role roleFactory(String name, String abbreviation) {
         return Role.builder()
@@ -71,13 +71,13 @@ public class PersistenceHelper {
         assertEquals(expected.age(), actual.getAge());
     }
 
-//    public static void assertUser(String expectedUsername, String expectedPassword, User actual) {
-//        assertThat(actual.getId()).isPositive();
-//        assertEquals(expectedUsername, actual.getUsername());
-//        assertEquals(expectedPassword, actual.getPassword());
-//        assertTrue(actual.getEnabled());
-//        assertNull(actual.getRoles());
-//    }
+    public static void assertUser(String expectedUsername, String expectedPassword, User actual) {
+        assertThat(actual.getId()).isPositive();
+        assertEquals(expectedUsername, actual.getUsername());
+        assertEquals(expectedPassword, actual.getPassword());
+        assertTrue(actual.getEnabled());
+        assertNull(actual.getRoles());
+    }
 
     public static void assertRole(String expectedName, String expectedAbbreviation, Role actual) {
         assertThat(actual.getId()).isPositive();

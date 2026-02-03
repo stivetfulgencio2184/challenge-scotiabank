@@ -5,7 +5,7 @@ import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.v1.req
 //import org.alpha.omega.student_microservice.infrastructure.adapter.in.web.v1.request.UserRoleRequestV1;
 //import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.RoleEntity;
 import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.StudentEntity;
-//import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.UserEntity;
+import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.UserEntity;
 //import org.alpha.omega.student_microservice.infrastructure.adapter.out.persistence.UserRoleEntity;
 
 public class WebFactory {
@@ -18,10 +18,10 @@ public class WebFactory {
         return new StudentRequestV1(id, name, lastname, status, age);
     }
 
-//    public static UserEntity userEntityFactory(Boolean enabled, String username, String password) {
-//        return new UserEntity(null, enabled, username, password);
-//    }
-//
+    public static UserEntity userEntityFactory(Boolean enabled, String username, String password) {
+        return new UserEntity(null, enabled, username, password);
+    }
+
 //    public static RoleEntity roleEntityFactory(String name, String abbreviation) {
 //        return new RoleEntity(null, name, abbreviation);
 //    }
