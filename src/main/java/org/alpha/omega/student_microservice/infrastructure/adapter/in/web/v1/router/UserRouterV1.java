@@ -24,19 +24,19 @@ public class UserRouterV1 {
         this.roleUriFactory = roleUriFactory;
     }
 
-//    @Bean
-//    public RouterFunction<ServerResponse> userRoutesV1(UserHandlerV1 handler, UserIdFilter userIdFilter) {
-//        RouterFunction<ServerResponse> routesWithoutFilter = route(GET(getBaseUri()), handler::getUsers)
-//                .andRoute(POST(getBaseUri())
-//                                .and(contentType(APPLICATION_JSON)), handler::createNewUser);
-//        RouterFunction<ServerResponse> routesWithFilter = route(GET(getUsersRolesPath()), handler::findRolesOfUser)
-//                .andRoute(POST(getUsersRolesPath())
-//                                .and(contentType(APPLICATION_JSON)), handler::assignRole)
-//                .filter(userIdFilter);
-//
-//        return routesWithoutFilter
-//                .and(routesWithFilter);
-//    }
+    @Bean
+    public RouterFunction<ServerResponse> userRoutesV1(UserHandlerV1 handler, UserIdFilter userIdFilter) {
+        RouterFunction<ServerResponse> routesWithoutFilter = route(GET(getBaseUri()), handler::getUsers)
+                .andRoute(POST(getBaseUri())
+                                .and(contentType(APPLICATION_JSON)), handler::createNewUser);
+        RouterFunction<ServerResponse> routesWithFilter = route(GET(getUsersRolesPath()), handler::findRolesOfUser)
+                .andRoute(POST(getUsersRolesPath())
+                                .and(contentType(APPLICATION_JSON)), handler::assignRole)
+                .filter(userIdFilter);
+
+        return routesWithoutFilter
+                .and(routesWithFilter);
+    }
 
     private String getBaseUri() {
         return this.userUriFactory.getApiVersion() + this.userUriFactory.getResourceUsers();
