@@ -32,6 +32,7 @@
 		<org.maven.version>3.11.0</org.maven.version>
 		<org.lombok.version>1.18.36</org.lombok.version>
 		<org.lombok.mapstruct>0.2.0</org.lombok.mapstruct>
+		<org.bcprov.version>1.83</org.bcprov.version>
 	</properties>
 	<dependencies>
 		<!-- WebFlux -->
@@ -100,6 +101,20 @@
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<!-- security -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- Argon2 -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>${org.bcprov.version}</version>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 

@@ -2,6 +2,13 @@ package org.alpha.omega.student_microservice.domain.model;
 
 import java.util.Objects;
 
+/**
+ * Student class is immutable, because not define setter methods. This is very clean, by:
+ * - Thread safety
+ * - Predictability
+ * - Better functional design
+ * - Best for reactive programming
+ */
 public class Student {
 
     private Integer id;
@@ -14,40 +21,20 @@ public class Student {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public Boolean getStatus() {
         return status;
     }
 
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
     public Integer getAge() {
         return age;
-    }
-
-    public void setAge(Integer age) {
-        this.age = age;
     }
 
     @Override

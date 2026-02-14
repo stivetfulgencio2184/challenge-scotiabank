@@ -2,6 +2,13 @@ package org.alpha.omega.student_microservice.domain.model;
 
 import java.util.Objects;
 
+/**
+ * Role class is immutable, because not define setter methods. This is very clean, by:
+ * - Thread safety
+ * - Predictability
+ * - Better functional design
+ * - Best for reactive programming
+ */
 public class Role {
 
     private Integer id;
@@ -12,24 +19,12 @@ public class Role {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
     public String getAbbreviation() {
         return abbreviation;
-    }
-
-    public void setAbbreviation(String abbreviation) {
-        this.abbreviation = abbreviation;
     }
 
     @Override

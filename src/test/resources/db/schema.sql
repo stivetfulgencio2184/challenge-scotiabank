@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     enabled BOOLEAN,
     username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(50)
+    password VARCHAR(120)
 );
 
 CREATE TABLE IF NOT EXISTS roles (

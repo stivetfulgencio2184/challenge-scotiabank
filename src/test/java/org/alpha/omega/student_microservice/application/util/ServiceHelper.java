@@ -37,12 +37,12 @@ public class ServiceHelper {
                 .build();
     }
 
-    public static User userFactory(Integer id, String username, Boolean enabled, Set<Role> roles) {
+    public static User userFactory(Integer id, String username, String password, Boolean enabled, Set<Role> roles) {
         return User.builder()
                 .id(id)
                 .username(username)
                 .enabled(enabled)
-                .password("password" + username)
+                .password(password != null ? password : "password" + username)
                 .roles(roles)
                 .build();
     }

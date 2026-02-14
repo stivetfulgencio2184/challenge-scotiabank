@@ -1,6 +1,8 @@
 package org.alpha.omega.student_microservice.application.service;
 
 
+import org.alpha.omega.student_microservice.application.contant.SecurityTestConstant;
+import org.alpha.omega.student_microservice.application.port.out.PasswordEncoderPort;
 import org.alpha.omega.student_microservice.application.port.out.UserRepositoryPort;
 import org.alpha.omega.student_microservice.application.util.ApplicationTestMessages;
 import org.alpha.omega.student_microservice.domain.exception.AlreadyRegisteredException;
@@ -36,6 +38,9 @@ class UserServiceTest {
     private UserRepositoryPort repositoryPort;
 
     @Mock
+    private PasswordEncoderPort passwordEncoder;
+
+    @Mock
     private TransactionalOperator transactionalOperator;
 
     @InjectMocks
@@ -61,7 +66,7 @@ class UserServiceTest {
     @Test
     void testGetUserByUsername() {
         //Given
-        User sfulgencio = userFactory(1, "stivet", true, null);
+        User sfulgencio = userFactory(1, "stivet", null, true, null);
         given(this.repositoryPort.findByUsername(sfulgencio.getUsername()))
                 .willReturn(Mono.just(sfulgencio));
 
@@ -75,8 +80,8 @@ class UserServiceTest {
     @Test
     void testCreateUserAlreadyRegistered() {
         //Given
-        User registeredUser = userFactory(1, "stivet", true, null);
-        User newUser = userFactory(null, "stivet", true, null);
+        User registeredUser = userFactory(1, "stivet", null, true, null);
+        User newUser = userFactory(null, "stivet", null, true, null);
         given(this.repositoryPort.findByUsername(newUser.getUsername()))
                 .willReturn(Mono.just(registeredUser));
         enableTransactionalExecution(this.transactionalOperator);
@@ -96,27 +101,32 @@ class UserServiceTest {
     @Test
     void testCreateUser() {
         //Given
-        User registeredUser = userFactory(1, "stivet", true, null);
-        User newUser = userFactory(null, "stivet", true, null);
+        User registeredUser = userFactory(1, "stivet", SecurityTestConstant.Encode.PASSWORD, true, null);
+        User newUser = userFactory(null, "stivet", null, true, null);
+        User encryptedUser = newUser.encryptPassword(SecurityTestConstant.Encode.PASSWORD);
+
         given(this.repositoryPort.findByUsername(newUser.getUsername()))
                 .willReturn(Mono.empty());
-        given(this.repositoryPort.save(newUser))
+        given(this.passwordEncoder.encode(newUser.getPassword()))
+                .willReturn(SecurityTestConstant.Encode.PASSWORD);
+        given(this.repositoryPort.save(any(User.class)))
                 .willReturn(Mono.just(registeredUser));
         enableTransactionalExecution(this.transactionalOperator);
 
         //When and Then
         StepVerifier.create(this.userService.createUser(newUser))
-                .assertNext(user -> assertUser(newUser, user))
+                .assertNext(user -> assertUser(encryptedUser, user))
                 .verifyComplete();
         then(this.repositoryPort).should(times(1)).findByUsername(newUser.getUsername());
-        then(this.repositoryPort).should(times(1)).save(newUser);
+        then(this.passwordEncoder).should(times(1)).encode(newUser.getPassword());
+        then(this.repositoryPort).should(times(1)).save(any(User.class));
     }
 
     @Test
     void testGetAllUsers() {
         //Given
-        User sfulgencio = userFactory(1, "stivet", true, null);
-        User mruiz = userFactory(2, "mary", true, null);
+        User sfulgencio = userFactory(1, "stivet", null, true, null);
+        User mruiz = userFactory(2, "mary", null, true, null);
         List<User> expectedUsers = List.of(sfulgencio, mruiz);
         given(this.repositoryPort.findAll()).willReturn(Flux.just(sfulgencio, mruiz));
 

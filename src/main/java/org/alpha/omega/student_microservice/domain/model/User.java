@@ -3,6 +3,13 @@ package org.alpha.omega.student_microservice.domain.model;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * User class is immutable, because not define setter methods. This is very clean, by:
+ * - Thread safety
+ * - Predictability
+ * - Better functional design
+ * - Best for reactive programming
+ */
 public class User {
 
     private Integer id;
@@ -15,40 +22,34 @@ public class User {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
     public Boolean getEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public Set<Role> getRoles() {
         return roles;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    /**
+     * Immutability Pattern: return a new instance with the password changed, without mutate the original object.
+     * @param encryptPassword is the encoded password
+     * @return User
+     */
+    public User encryptPassword(String encryptPassword) {
+        return User.builder()
+                .id(this.id)
+                .enabled(this.enabled)
+                .username(this.username)
+                .password(encryptPassword)
+                .build();
     }
 
     @Override

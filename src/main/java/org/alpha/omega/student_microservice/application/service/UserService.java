@@ -1,6 +1,7 @@
 package org.alpha.omega.student_microservice.application.service;
 
 import org.alpha.omega.student_microservice.application.port.in.UserUseCase;
+import org.alpha.omega.student_microservice.application.port.out.PasswordEncoderPort;
 import org.alpha.omega.student_microservice.application.port.out.UserRepositoryPort;
 import org.alpha.omega.student_microservice.application.util.ApplicationMessages;
 import org.alpha.omega.student_microservice.domain.exception.AlreadyRegisteredException;
@@ -10,15 +11,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class UserService implements UserUseCase {
 
     private final UserRepositoryPort repositoryPort;
+    private final PasswordEncoderPort passwordEncoder;
     private final TransactionalOperator transactionalOperator;
 
-    public UserService(UserRepositoryPort repositoryPort, TransactionalOperator transactionalOperator) {
+    public UserService(UserRepositoryPort repositoryPort, PasswordEncoderPort passwordEncoder,
+                       TransactionalOperator transactionalOperator) {
         this.repositoryPort = repositoryPort;
+        this.passwordEncoder = passwordEncoder;
         this.transactionalOperator = transactionalOperator;
     }
 
@@ -40,7 +45,12 @@ public class UserService implements UserUseCase {
                                                 ApplicationMessages.USER, ApplicationMessages.USERNAME,
                                                 registeredUser.getUsername()))))
                         .onErrorResume(NotFoundException.class,
-                                ex -> this.repositoryPort.save(user))
+                                ex -> Mono.fromCallable(() -> this.passwordEncoder.encode(user.getPassword()))
+                                        .subscribeOn(Schedulers.boundedElastic())
+                                        .flatMap(hashedPassword -> {
+                                            User encryptedUser = user.encryptPassword(hashedPassword);
+                                            return this.repositoryPort.save(encryptedUser);
+                                        }))
         ).single();
     }
 

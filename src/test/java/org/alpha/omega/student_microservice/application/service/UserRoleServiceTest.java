@@ -145,7 +145,7 @@ class UserRoleServiceTest {
     @Test
     void testGetRolesByUser() {
         //Given
-        User sfulgencio = userFactory(1, "sfulgencio", true,
+        User sfulgencio = userFactory(1, "sfulgencio", null, true,
                 Set.of(roleFactory(1, "Administrator", "admin"),
                         roleFactory(2, "Database Administrator", "dba")));
         given(this.userRepositoryPort.findById(1)).willReturn(Mono.just(User.builder().id(1).build()));
